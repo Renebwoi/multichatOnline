@@ -2,6 +2,9 @@ import  streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import os
+import speech_recognition as sr
+import pyttsx3
+
 
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import google.generativeai as genai
@@ -53,9 +56,12 @@ def get_conversational_chain():
     return chain
 
 def user_input(user_question):
+    engine = pyttsx3.init()
+    
     embeddings = GoogleGenerativeAIEmbeddings(model = "models/embedding-001")
     
     new_db = FAISS.load_local("faiss_index", embeddings,allow_dangerous_deserialization=True)
+    
     docs =new_db.similarity_search(user_question)
     
     chain =get_conversational_chain()
@@ -66,15 +72,38 @@ def user_input(user_question):
     
     print(response)
     st.write("Reply: ", response["output_text"])
+    engine.say(response["output_text"])
+    engine.runAndWait()
     
+def user_input_speak():
+    st.write("Speak your question:")
+    
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        audio_data = recognizer.listen(source)
+    
+    try:
+        user_question = recognizer.recognize_google(audio_data)
+        st.write("You said:", user_question)
+        response = user_input(user_question)#to process user input on it
+        st.write("Reply:", response)
+    except sr.UnknownValueError:
+        st.write("Sorry, I couldn't understand what you said.")
+    except sr.RequestError:
+        st.write("Sorry, I couldn't reach the Google API.")
+
+
 def main():
-    st.set_page_config("Chat With Multiple PDF")
-    st.header("Chat with Multiple PDF using Gemini😎")
+    st.set_page_config("Chat With Learning Materials")
+    st.header("Chat with Learning Materials😎")
     
     user_question = st.text_input("Ask a Question from the PDF files")
     
     if user_question:
         user_input(user_question)
+        
+    if st.button("Speak"):#changed here too
+        user_input_speak()
     
     with st.sidebar:
         st.title("Menu:")
@@ -86,7 +115,6 @@ def main():
                 text_chunks = get_text_chunks(raw_text)
                 get_vector_store(text_chunks)
                 st.success("Done")
-
-
+    
 if __name__ == "__main__":
     main()
