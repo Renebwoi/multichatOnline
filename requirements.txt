@@ -6,5 +6,5 @@ PyPDF2==3.0.1
 faiss-cpu==1.8.0
 langchain_google_genai==1.0.2
 SpeechRecognition==3.10.3
-pyaudio==0.2.14
 pyttsx3==2.90
+https://pypi.python.org/packages/source/P/PyAudio/PyAudio-0.2.11.tar.gz
